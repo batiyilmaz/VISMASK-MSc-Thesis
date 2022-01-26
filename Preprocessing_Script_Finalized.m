@@ -1,0 +1,144 @@
+% Clear the environment
+close all;
+clear;
+clc;
+restoredefaultpath; 
+
+% Add FieldTrip path
+addpath /Users/batiyilmaz/Documents/FieldTrip;
+ft_defaults;
+
+% Define data path
+eeg_folder = '/Volumes/BATIDISK/VisualMasking/EEG';
+subn = 1; % subject number
+subfolder = sprintf('subj%02d',subn);
+eeg_file = dir(fullfile(eeg_folder, subfolder, '*.eeg'));
+header_files = dir(fullfile(eeg_folder, subfolder, '*.vhdr'));
+
+% Define data file
+datastr = fullfile(eeg_file.folder,eeg_file.name);
+
+% Create output path for clean data
+clean_data_path =  '/Volumes/Extreme SSD/Visual_Masking_Preprocessed_Files';
+sub_clean_data_path = fullfile(clean_data_path, subfolder);
+if ~exist(sub_clean_data_path,'dir'); mkdir(sub_clean_data_path); end
+
+% Subject information
+subjectinfo.reject_trials_ver1 = [];
+subjectinfo.reject_channel = [];
+subjectinfo.reject_comp = [];
+subjectinfo.reject_trials_ver2 = [];
+
+% Defining events
+cfg.headerfile = datastr;
+cfg.trialdef.eventtype = 'Stimulus';
+triggers = {'S  1' 'S  2' 'S  3' 'S  4' 'S  5' 'S  6' 'S  7' 'S  8' 'S  9' 'S 10',...
+    'S 11' 'S 12' 'S 13' 'S 14' 'S 15' 'S 16' 'S 17' 'S 18' 'S 19' 'S 20',...
+    'S 21' 'S 22' 'S 23' 'S 24' 'S 25' 'S 26' 'S 27' 'S 28' 'S 29' 'S 30',...
+    'S 31' 'S 32' 'S 33' 'S 34' 'S 35' 'S 36' 'S 37' 'S 38' 'S 39' 'S 40',...
+    'S 41' 'S 42' 'S 43' 'S 44' 'S 45' 'S 46' 'S 47' 'S 48'};
+% triggers = {'S  1' 'S  2' 'S  3' 'S  4' 'S  5',...
+%     'S  6' 'S  7' 'S  8' 'S  9' 'S 10',...
+%     'S 11' 'S 12' 'S 13' 'S 14' 'S 15',...
+%     'S 16' 'S 17' 'S 18' 'S 19' 'S 20',...
+%     'S 21' 'S 22' 'S 23' 'S 24' 'S 25',...
+%     'S 26' 'S 27' 'S 28' 'S 29' 'S 30',...
+%     'S 31' 'S 32' 'S 33' 'S 34' 'S 35',...
+%     'S 36' 'S 37' 'S 38' 'S 39' 'S 40',...
+%     'S 41' 'S 42' 'S 43' 'S 44' 'S 45',...
+%     'S 46' 'S 47' 'S 48'}; % Bati: double-check the trigger strings
+cfg.trialdef.eventvalue = triggers; 
+cfg.trialdef.prestim = 0.1; 
+cfg.trialdef.poststim = 1.0;
+cfg_tr_def = ft_definetrial(cfg);
+
+
+% Apply notch filter (50 Hz)
+cfg = [];
+cfg.dataset = datastr;
+cfg.dftfilter = 'no'; % notch filtering for power line noise at 50 Hz
+cfg.dftfreq = 50;
+data = ft_preprocessing(cfg);
+trialnew(1:32,:) = data.trial{1,1}(33:64,:);
+trialnew(33:64,:) = data.trial{1,1}(1:32,:);
+data.trial{1,1} = trialnew;
+
+% Export trials in data
+data_trl = ft_redefinetrial(cfg_tr_def, data);
+
+
+% Browse the data
+cfg = [];
+cfg.viewmode = 'vertical'; % cfg.viewmode = 'butterfly';
+cfg = ft_databrowser(cfg, data_trl);
+
+% Artifact rejection
+% subjectinfo.reject_trials_ver1 = cfg.artfctdef.visual.artifact;
+% data = ft_rejectartifact(cfg, data);
+
+% % Inspect electrodes through trials 
+% cfg          = [];
+% cfg.method   = 'trial';
+% cfg        = ft_rejectvisual(cfg, data);
+
+% Inspect bad channels in summary mode
+cfg=[];
+cfg.showlabel='yes';
+cfg.method='summary';
+cfg.layout = 'acticap-64ch-standard2.mat'; 
+data_trl_rmbad = ft_rejectvisual(cfg, data_trl);
+
+% Save removed channels
+subjectinfo.reject_channel = setdiff(data.label,data_trl_rmbad.label);
+
+% Independent Component Analysis (ICA)
+cfg = [];
+cfg.method = 'runica'; 
+cfg.channel = {'all'}; % {'all', '-insertchannelnameshere'};
+data_ics = ft_componentanalysis(cfg, data_trl_rmbad);
+
+% Create topoplots of the components
+figure;
+cfg = [];
+cfg.component = 1:20;  % components to be plotted
+cfg.layout    = 'acticap-64ch-standard2.mat'; 
+cfg.comment   = 'no';
+cfg.viewmode = 'component';
+cfg.colormap = colormap(jet);
+ft_topoplotIC(cfg, data_ics); % Topoplot
+
+% Plot component time series
+cfg          = [];
+cfg.channel  = [12, 19]; % components to be plotted
+cfg.viewmode = 'component';
+cfg.layout   = 'acticap-64ch-standard2.mat'; % specify the layout file that should be used for plotting
+ft_databrowser(cfg, data_ics); % timecourse
+
+% Remove the bad components
+cfg = [];
+cfg.component = input('Which components to be removed? '); % fill in the to be removed component(s)
+cfg.demean = 'no';
+data_rmbad_rmic = ft_rejectcomponent(cfg, data_ics, data_trl_rmbad);
+
+% Save the rejected components
+subjectinfo.reject_comp  = cfg.component; 
+
+% % Re-visit visual inspection
+%cfg = [];
+%cfg.viewmode = 'vertical';
+%cfg = ft_databrowser(cfg, data_rmbad_rmic);
+% 
+% subjectinfo.reject_trials_ver2 = cfg.artfctdef.visual.artifact;
+% data_rmbad_rmic = ft_rejectartifact(cfg, data_rmbad_rmic);
+
+% Downsample data to 100 Hz
+cfg = []; 
+cfg.resamplefs = 100;
+cfg.detrend = 'no';
+data_rmbad_rmic_ds = ft_resampledata(cfg, data_rmbad_rmic); 
+
+% Save the data in memory (input, output)
+data_clean = data_rmbad_rmic_ds;
+save(fullfile(sub_clean_data_path,[subfolder,'_preprocessed.mat']), 'data_clean', '-v7.3');
+save(fullfile(sub_clean_data_path,[subfolder,'_ics.mat']), 'data_ics', '-v7.3');
+save(fullfile(sub_clean_data_path,[subfolder,'_info.mat']), 'subjectinfo');
