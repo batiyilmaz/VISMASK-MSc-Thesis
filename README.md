@@ -1,5 +1,5 @@
-# The Effects of Visual Backward Masking on Visuotemporal Neural Dynamics (MSc Thesis)
+# VISMASK-MSc-Thesis
 
-This repository keeps track of the codes used during the formation of my MSc thesis, working titled "The Effects of Visual Backward Masking on Visuotemporal Dynamics" (ongoing).
+This repository includes the code written during the formation of my MSc thesis, titled "The Effects of Visual Backward Masking on Visuotemporal Dynamics".
 
 Written in MATLAB (R2022a).
