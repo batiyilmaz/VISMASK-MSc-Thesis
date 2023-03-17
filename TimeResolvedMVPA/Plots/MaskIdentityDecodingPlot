@@ -1,0 +1,217 @@
+% Clear the environment
+close all;
+clear;
+clc;
+restoredefaultpath; 
+
+% Add FieldTrip path
+addpath /Users/batiyilmaz/Documents/FieldTrip;
+ft_defaults;
+
+matlab.addons.enableAddon("fdr_bh");
+matlab.addons.enableAddon("barwitherr(errors,varargin)");
+matlab.addons.enableAddon("stdshade");
+
+% load data
+workingDir = '/Volumes/Extreme SSD/MaskIdentityDivisions/highvisibility';
+workingdir = '/Volumes/Extreme SSD/MaskIdentityDivisions/lowvisibility';
+
+ResultDirectory = '/Volumes/Extreme SSD/VISMASK-MSc-Thesis-Results/ttest/MaskIdentityDecoding';
+
+subjList = dir(fullfile(workingDir, 'subj*'));
+totalSubjs = length(subjList);
+
+% loop over the names
+for iSubj = 1 : totalSubjs
+    subjID=subjList(iSubj).name;
+    processedFile = fullfile(workingDir, subjID, strcat(subjID,'_mean2DA_high.mat'));
+    processedfile = fullfile(workingdir, subjID, strcat(subjID,'_mean2DA_low.mat'));
+    load(processedFile, 'mean2DA_high');
+    load(processedfile, 'mean2DA_low');
+    allSubjsH(iSubj,:) = squeeze(nanmean(mean2DA_high,3));
+    allSubjsL(iSubj,:) = squeeze(nanmean(mean2DA_low,3));
+end
+
+buH = squeeze(nanmean(allSubjsH,1));
+buL = squeeze(nanmean(allSubjsL,1));
+
+%% Stats
+
+dataH = allSubjsH;
+dataH = dataH - 50;
+
+allSubjsMeanH = nanmean(dataH,1);
+
+dataL = allSubjsL;
+dataL = dataL - 50;
+
+allSubjsMeanL = nanmean(dataL,1);
+
+% res.nPerm = 1000;
+% res.tail = 'right';
+% res.alpha = 0.05;
+% 
+% [res.SignificantVariables, res.pvalues, res.crit_p, res.adjusted_pvalues] = fdr_permutation_cluster_1sample_alld(dataH, res.nPerm, res.tail, res.alpha);
+ significantH = ttest_1D(dataH);
+
+% [res.SignificantVariables, res.pvalues, res.crit_p, res.adjusted_pvalues] = fdr_permutation_cluster_1sample_alld(dataL, res.nPerm, res.tail, res.alpha);
+ significantL = ttest_1D(dataL);
+
+data_high = allSubjsH;
+data_low = allSubjsL;
+
+data_high= data_high(:,11:111); 
+data_low = data_low(:,11:111);
+
+timepoints=0:10:1000;
+nboot=1000; 
+% [h.onstps, h.ofstps, ...
+%     h.pk1st, h.pk2nd, h.pk3rd, ...
+%     h.acc_pktps, h.onstps_ci, h.ofstps_ci, ...
+%     h.pk1st_ci, h.pk2nd_ci, h.pk3rd_ci] = bootstrap_ttest_v0(data_high-50,timepoints,nboot);
+% 
+% [l.onstps, l.ofstps, ...
+%     l.pk1st, l.pk2nd, l.pk3rd, ...
+%     l.acc_pktps, l.onstps_ci, l.ofstps_ci, ...
+%    l.pk1st_ci, l.pk2nd_ci, l.pk3rd_ci] = bootstrap_ttest_v0(data_low-50,timepoints,nboot);
+
+[hi.ontps, hi.offtps, hi.pktps, hi.pkacc, hi.ontps_cis, hi.offtps_cis, hi.pktps_cis, hi.pkacc_cis] = bootstrap_ttest_v1(data_high-50,timepoints,nboot);
+
+[lo.ontps, lo.offtps, lo.pktps, lo.pkacc, lo.ontps_cis, lo.offtps_cis, lo.pktps_cis, lo.pkacc_cis] = bootstrap_ttest_v1(data_low-50,timepoints,nboot);
+
+
+%%%% Plot
+nTime = 111;
+axx = linspace(-100,1000, nTime);
+bxx = linspace(0,1000, 1000);
+
+F = -100:10:1000;
+
+centery = 50;
+stepTime = 10;
+
+textsize = 16;
+
+c1 = [0 114 178]./256;
+c2 = [230 159 0]./256;
+c3 = [0 0 0]./256;
+
+%%
+
+f = figure();
+hold on
+maskOn = 2*16.7;
+maskOff = (2+12)*16.7;
+maskTime = maskOn:stepTime:maskOff;
+maskXLength = length(maskTime);
+maskColor = "#F2F2F2"; 
+shadedplot(maskTime, repmat(-90,[1,maskXLength]), ...
+repmat(90,[1,maskXLength]),...
+maskColor, maskColor);
+
+%%
+
+% first mask onset
+hold on;
+xw = xline(maskOn, '', {'Mask onset'}, 'LineWidth', 0.1,'FontName', 'Arial', 'FontSize', textsize,'FontWeight', 'normal');
+xw.LabelVerticalAlignment = 'middle';
+xw.LabelHorizontalAlignment = 'center';
+xw.Alpha = 0;
+maskOn = 36*16.7;
+maskOff = (36+12)*16.7;
+maskTime = maskOn:stepTime:maskOff;
+maskXLength = length(maskTime);
+maskColor = "#F2F2F2"; 
+shadedplot(maskTime, repmat(-90,[1,maskXLength]), ...
+repmat(90,[1,maskXLength]),...
+maskColor, maskColor);
+
+%%
+% second mask onset
+hold on;
+xp = xline(maskOn,'', {'Mask onset'}, 'LineWidth', 0.1,'FontName', 'Arial', 'FontSize', textsize,'FontWeight', 'normal');
+xp.LabelVerticalAlignment = 'middle';
+xp.LabelHorizontalAlignment = 'center';
+xp.Alpha = 0;
+xl = xline(0,'-', {'Stimulus onset'}, 'LineWidth', 1,'FontName', 'Arial', 'FontSize', textsize,'FontWeight', 'normal');
+xl.LabelVerticalAlignment = 'middle';
+xl.LabelHorizontalAlignment = 'left';
+yline(50,'-', 'LineWidth', 1);
+
+%% main curves
+
+hold on
+% p1 = plot(axx, allSubjsMeanH+50, 'b', 'LineWidth', 3); 
+% p2 = plot(axx, allSubjsMeanL+50, 'r', 'LineWidth', 3);
+% p3 = plot(axx, allSubjsMeanM+50, 'k', 'LineWidth', 3);
+
+p1 = stdshade(allSubjsH,'0.10',c1, F);
+p2 = stdshade(allSubjsL,'0.10',c2, F);
+
+ax = gca;
+ax.XGrid = 'on';
+ax.XMinorGrid = 'off';
+ax.YGrid = 'off';
+ax.YMinorGrid = 'off';
+
+YMAX = 65;
+
+% significant time points
+line(F(significantH),YMAX, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',c1, 'Color', c1, 'LineWidth', 4);
+line(F(significantL),YMAX-0.4, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',c2, 'Color', c2, 'LineWidth', 4);
+
+%%
+% onset latencies
+line([0, 630], [46.5 46.5], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',c1, 'Color', c1, 'LineWidth', 1);
+line([530, 530], [46.5 46.5], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',c1, 'Color', c1, 'LineWidth', 1);
+
+line([10, 130], [46.9 46.9], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',c2, 'Color', c2, 'LineWidth', 1);
+line([120, 120], [46.9 46.9], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',c2, 'Color', c2, 'LineWidth', 1);
+
+%%
+
+% pk1st
+plot([740, 830], [45.5 45.5], '-|','Color',c1,'MarkerSize',6, 'LineWidth', 1); 
+line([790, 790], [45.5 45.5], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',c1, 'Color', c1, 'LineWidth', 1);
+
+
+plot([250, 270], [45.9 45.9], '-|','Color',c2,'MarkerSize',6, 'LineWidth', 1);
+line([260, 260], [45.9 45.9], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',c2, 'Color', c2, 'LineWidth', 1);
+
+% offset latencies
+line([1000, 1000], [46.5 46.5], 'Marker','square','MarkerSize', 6, 'MarkerFaceColor',c1, 'Color', c1, 'LineWidth', 1);
+line([580, 580], [46.9 46.9], 'Marker','square','MarkerSize', 6, 'MarkerFaceColor',c2, 'Color', c2, 'LineWidth', 1);
+
+%%
+
+xlabel('Time (ms)', 'LineWidth', 5, 'FontName', 'Arial', 'FontSize', textsize, 'FontWeight', 'bold')
+ylabel('Decoding accuracy (%)', 'LineWidth', 5, 'FontName', 'Arial', 'FontSize', textsize, 'FontWeight', 'bold')
+% legend('High Visibility', 'Low Visibility','Difference','Location', [0.78 0.85 0.15 0.08], 'FontSize', 14, 'FontWeight', 'bold')
+xlim([-100 1000])
+ylim([45 65])
+
+a = get(gca,'XTickLabel');
+set(gca,'XTickLabel',a,'FontName','Arial','FontSize',textsize);
+
+b = get(gca,'YTickLabel');
+set(gca,'YTickLabel',b,'FontName','Arial','FontSize',textsize);
+
+rectFig = get(gcf,'position');
+% width=800;
+% height=500;
+% rectFig = get(gcf,'position');
+% width=800;
+% height=500;
+% [1,1,750, 750], 'unit','pixel'
+set(gcf,'Position',[rectFig(1),rectFig(2),750, 500], 'unit','pixel', 'color', 'white', 'PaperUnits','centimeters','PaperSize',[20,20],'PaperPosition',[0,0,20,20]);% colordef white;
+set(gca,'Units','normalized')
+colordef white
+
+pl = legend([ p1, p2 ], 'High-visibility', 'Low-visibility', 'Location', [0.660312500000001,0.782500000000001,0.309375,0.112]);
+set(pl, 'FontName', 'Arial', 'FontSize', textsize,'FontWeight', 'normal');
+legend boxoff;
+
+%%
+% 
+filename = fullfile(ResultDirectory, 'MaskIdentityDecoding.png');
+exportgraphics(gcf, filename, 'Resolution', 300)
