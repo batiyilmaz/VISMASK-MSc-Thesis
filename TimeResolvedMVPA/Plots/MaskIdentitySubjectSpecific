@@ -1,0 +1,48 @@
+%% Time-Resolved Mask Identity Decoding Individual Subject Results
+
+clc;
+clear;
+close all;
+
+ResultDirectory = '/Volumes/Extreme SSD/MScThesisResultsforGitHub/Figures/MaskIdentityDecoding/SubjectSpecific';
+
+workingDir = '/Volumes/Extreme SSD/MaskIdentityDivisions/highvisibility';
+workingdir = '/Volumes/Extreme SSD/MaskIdentityDivisions/lowvisibility';
+
+c1 = [0 114 178]./256;
+c2 = [230 159 0]./256;
+c3 = [0 0 0]./256;
+
+% Loading the participant data
+for subn = 1:32
+    subn
+    subjectName = sprintf('subj%02d',subn);
+    preprocessedFile = fullfile(workingDir, subjectName, strcat(subjectName,'_mean2DA_high.mat'));
+    preProcessedfile = fullfile(workingdir, subjectName, strcat(subjectName,'_mean2DA_low.mat'));
+    load(preprocessedFile, 'mean2DA_high');
+    load(preProcessedfile, 'mean2DA_low');
+
+    result_high = mean2DA_high;
+    result_low = mean2DA_low;
+
+    subjectname = sprintf('Subject %2d',subn);
+
+    figure(1)
+    subplot(8,4,subn) 
+    plot(-100:10:1000, result_high,'Color', c1,'LineWidth',2)
+    hold on;
+    plot(-100:10:1000, result_low,'Color', c2,'LineWidth',2)
+    xlim([-100 1000])
+    ylim([40 85])
+    xline(0)
+    yline(50)
+    title(subjectname, 'FontName', 'Arial')
+    %legend('High Visibility', 'Low Visibility')
+
+    % Set figure position and size
+    rectFig = get(gcf,'position');
+    set(gcf,'position',[rectFig(1),rectFig(2),2000,1000], 'color', 'white');
+end
+
+filename = fullfile(ResultDirectory, 'MaskDecodingSubjectResults.png');
+exportgraphics(gcf, filename, 'Resolution', 300)
