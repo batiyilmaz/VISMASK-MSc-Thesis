@@ -1,4 +1,4 @@
-Adapted from Siying Xie, modified by Bati Yilmaz
+% Adapted from Siying Xie, modified by Bati Yilmaz
 
 clc;
 clear;
@@ -10,22 +10,24 @@ matlab.addons.enableAddon("barwitherr(errors,varargin)");
 % ResultDirectory = '/Volumes/Extreme SSD/MScThesisResultsforGitHub/Figures/Behavior';
 
 for subn = 1:32
-behav_folder = '/Volumes/KINGSTON/VisualMasking/EEGBehav';
+
+behavior_folder = '/Volumes/KINGSTON/VisualMasking/EEGBehav';
 subfolder = sprintf('subj%02d',subn);
-behavfiles = dir(fullfile(behav_folder, subfolder, 'Behav*'));
+behaviorfiles = dir(fullfile(behav_folder, subfolder, 'Behav*'));
 conds = [];
 correc = [];
 respt = [];
 
 for fn = 1:length(behavfiles)
     load(fullfile(behavfiles(fn).folder,behavfiles(fn).name),'Data');
-    conds = [conds,cell2mat({Data.ConditionNum})];
+    conditions = [conditions,cell2mat({Data.ConditionNum})];
     correc = [correc, cell2mat({Data.correctness})];
     respt = [respt, cell2mat({Data.responseTime})];
 end
-prob_idx = find(conds==49);
-high_idx=conds(prob_idx-1)<25;
-low_idx=conds(prob_idx-1)>24;
+
+prob_index = find(conditions==49);
+highvis_index = conditions(prob_index-1) < 25;
+lowvis_index = conds(prob_index-1) > 24;
 %acc
 acc_general(subn,1)=length(find(correc==1))/length(prob_idx);
 acc_high(subn,1) = length(find(correc(prob_idx(high_idx))==1))/length(prob_idx(high_idx));
