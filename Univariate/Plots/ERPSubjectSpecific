@@ -1,0 +1,50 @@
+%% ERP Subject Temporal Looping Plots %%
+clc;
+clear;
+close all;
+
+ResultDirectory = '/Volumes/Extreme SSD/MScThesisResultsforGitHub/Figures/ERP/VEP/Pooling';
+
+workingDir = '/Volumes/Extreme SSD/ERPSubjectResults/AllPool';
+
+c1 = [0 114 178]./256;
+c2 = [230 159 0]./256;
+c3 = [0 0 0]./256;
+
+% Loading the participant data
+for subn = 1:32
+    subn;
+    subjectName = sprintf('subj%02d',subn);
+    preprocessedfile = fullfile(workingDir, subjectName, strcat(subjectName,'_mean2DA_high.mat'));
+    prerocessedFile = fullfile(workingDir, subjectName, strcat(subjectName,'_mean2DA_low.mat'));
+    preProcessedFile = fullfile(workingDir, subjectName, strcat(subjectName,'_mean2DA_diff.mat'));
+    load(preprocessedfile, 'data_high_plt');
+    load(prerocessedFile, 'data_low_plt');
+    load(preProcessedFile, 'data_diff_plt');
+
+    result_high = data_high_plt;
+    result_low = data_low_plt;
+    result_diff = data_diff_plt;
+
+    subjectname = sprintf('Subject %2d',subn);
+
+    figure(1)
+    subplot(8,4,subn) 
+    hold on;
+    plot(-100:10:1000, result_high,'Color', c1,'LineWidth',2);
+    plot(-100:10:1000, result_low,'Color', c2,'LineWidth',2);
+    plot(-100:10:1000, result_diff, 'k--','LineWidth',2);
+    xlim([-100 1000])
+    ylim([-3 5])
+    xline(0)
+    yline(0)
+    title(subjectname, 'FontName', 'Arial')
+%     legend('High Visibility', 'Low Visibility','Difference','FontSize',3)
+
+    % Set figure position and size
+    rectFig = get(gcf,'position');
+    set(gcf,'position',[rectFig(1),rectFig(2),2000,1000], 'color', 'white');
+end
+
+filename = fullfile(ResultDirectory, 'SubjectResultsGrandAveragePooling.png');
+exportgraphics(gcf, filename, 'Resolution', 300)
