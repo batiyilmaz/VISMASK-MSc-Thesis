@@ -1,0 +1,681 @@
+close all;
+clear;
+clc;
+restoredefaultpath;
+
+% Add FieldTrip path
+addpath /Users/batiyilmaz/Documents/FieldTrip;
+ft_defaults;
+
+matlab.addons.enableAddon("fdr_bh");
+matlab.addons.enableAddon("barwitherr(errors,varargin)");
+matlab.addons.enableAddon("stdshade");
+matlab.addons.enableAddon("export_fig");
+
+ResultDirectory = '/Volumes/Extreme SSD/VISMASK-MSc-Thesis-Results/ttest/GrandTotal/Object';
+
+load('/Volumes/KINGSTON/TimeCourseGrandNoise/tamtakim.mat');
+
+%%
+
+% allSubjsMeanHUNN = mean2DA_all_m;
+% clear mean2DA_all_m
+% 
+% allSubjsMeanHMNNBase = mean3DA;
+% clear mean3DA
+% 
+% allSubjsMeanHMNNEpoch = mean3DA;
+% clear mean3DA
+% 
+% allSubjsMeanHMNNTime = mean3DA;
+% clear mean3DA
+
+
+% data_HUNN= mean2DA_all(:,11:111); 
+% clear mean2DA_all
+% 
+% data_HMNNBase = mean2DA(:,11:111);
+% clear mean2DA
+% 
+% data_HMNNEpoch = mean2DA(:,11:111);
+% clear mean2DA
+% 
+% data_HMNNTime = mean2DA(:,11:111);
+% clear mean2DA
+
+% data_LUNN= allSubjsLUNN(:,11:111); 
+% data_LMNNBase = allSubjsLMNNBase(:,11:111);
+% data_LMNNEpoch = allSubjsLMNNEpoch(:,11:111);
+% data_LMNNTime = allSubjsLMNNTime(:,11:111);
+% 
+% data_DUNN= data_diffDUNN(:,11:111); 
+% data_DMNNBase = data_diffDMNNBase(:,11:111);
+% data_DMNNEpoch = data_diffDMNNEpoch(:,11:111);
+% data_DMNNTime = data_diffDMNNTime(:,11:111);
+
+timepoints=0:10:1000;
+nboot=1000; 
+
+[hunn.ontps, hunn.offtps, hunn.pktps, hunn.pkacc, hunn.ontps_cis, hunn.offtps_cis, hunn.pktps_cis, hunn.pkacc_cis] = bootstrap_ttest_v1(data_HUNN,timepoints,nboot);
+
+[hmbase.ontps, hmbase.offtps, hmbase.pktps, hmbase.pkacc, hmbase.ontps_cis, hmbase.offtps_cis, hmbase.pktps_cis, hmbase.pkacc_cis] = bootstrap_ttest_v1(data_HMNNBase,timepoints,nboot);
+
+[hmepo.ontps, hmepo.offtps, hmepo.pktps, hmepo.pkacc, hmepo.ontps_cis, hmepo.offtps_cis, hmepo.pktps_cis, hmepo.pkacc_cis] = bootstrap_ttest_v1(data_HMNNEpoch,timepoints,nboot);
+
+[hmtp.ontps, hmtp.offtps, hmtp.pktps, hmtp.pkacc, hmtp.ontps_cis, hmtp.offtps_cis, hmtp.pktps_cis, hmtp.pkacc_cis] = bootstrap_ttest_v1(data_HMNNTime,timepoints,nboot);
+
+%%
+% 
+% [lunn.ontps, lunn.offtps, lunn.pktps, lunn.pkacc, lunn.ontps_cis, lunn.offtps_cis, lunn.pktps_cis, lunn.pkacc_cis] = bootstrap_ttest_v1(data_LUNN,timepoints,nboot);
+% 
+% [lmbase.ontps, lmbase.offtps, lmbase.pktps, lmbase.pkacc, lmbase.ontps_cis, lmbase.offtps_cis, lmbase.pktps_cis, lmbase.pkacc_cis] = bootstrap_ttest_v1(data_LMNNBase,timepoints,nboot);
+% 
+% [lmepo.ontps, lmepo.offtps, lmepo.pktps, lmepo.pkacc, lmepo.ontps_cis, lmepo.offtps_cis, lmepo.pktps_cis, lmepo.pkacc_cis] = bootstrap_ttest_v1(data_LMNNEpoch,timepoints,nboot);
+% 
+% [lmtp.ontps, lmtp.offtps, lmtp.pktps, lmtp.pkacc, lmtp.ontps_cis, lmtp.offtps_cis, lmtp.pktps_cis, lmtp.pkacc_cis] = bootstrap_ttest_v1(data_LMNNTime,timepoints,nboot);
+% 
+% %%
+% 
+% [dunn.ontps, dunn.offtps, dunn.pktps, dunn.pkacc, dunn.ontps_cis, dunn.offtps_cis, dunn.pktps_cis, dunn.pkacc_cis] = bootstrap_ttest_v1(data_DUNN,timepoints,nboot);
+% 
+% [dmbase.ontps, dmbase.offtps, dmbase.pktps, dmbase.pkacc, dmbase.ontps_cis, dmbase.offtps_cis, dmbase.pktps_cis, dmbase.pkacc_cis] = bootstrap_ttest_v1(data_DMNNBase,timepoints,nboot);
+% 
+% [dmepo.ontps, dmepo.offtps, dmepo.pktps, dmepo.pkacc, dmepo.ontps_cis, dmepo.offtps_cis, dmepo.pktps_cis, dmepo.pkacc_cis] = bootstrap_ttest_v1(data_DMNNEpoch,timepoints,nboot);
+% 
+% [dmtp.ontps, dmtp.offtps, dmtp.pktps, dmtp.pkacc, dmtp.ontps_cis, dmtp.offtps_cis, dmtp.pktps_cis, dmtp.pkacc_cis] = bootstrap_ttest_v1(data_DMNNTime,timepoints,nboot);
+
+
+%%  
+
+res.nPerm = 1000;
+res.tail = 'right';
+res.alpha = 0.05;
+
+% HUNNsig = mean2DA_all;
+% clear mean2DA_all
+% 
+% HMNNBasesig = mean2DA; 
+% clear mean2DA
+% 
+% HMNNEpochsig = mean2DA;
+% clear mean2DA
+% 
+% HMNNTimesig = mean2DA;
+% clear mean2DA
+
+% [res.SignificantVariables, res.pvalues, res.crit_p, res.adjusted_pvalues] = fdr_permutation_cluster_1sample_alld(HUNNsig-50, res.nPerm, res.tail, res.alpha);
+significantHUNN = ttest_1D(HUNNsig-50);
+
+% [res.SignificantVariables, res.pvalues, res.crit_p, res.adjusted_pvalues] = fdr_permutation_cluster_1sample_alld(HMNNBasesig-50, res.nPerm, res.tail, res.alpha);
+significantHMNNBase = ttest_1D(HMNNBasesig-50);
+
+% [res.SignificantVariables, res.pvalues, res.crit_p, res.adjusted_pvalues] = fdr_permutation_cluster_1sample_alld(HMNNEpochsig-50, res.nPerm, res.tail, res.alpha);
+significantHMNNEpoch = ttest_1D(HMNNEpochsig-50);
+
+% [res.SignificantVariables, res.pvalues, res.crit_p, res.adjusted_pvalues] = fdr_permutation_cluster_1sample_alld(HMNNTimesig-50, res.nPerm, res.tail, res.alpha);
+significantHMNNTime = ttest_1D(HMNNTimesig-50);
+
+%% Plot
+
+nTime = 111;
+axx = linspace(-100,1000, nTime);
+bxx = linspace(0,1000, 1000);
+
+F = -100:10:1000;
+
+centery = 50;
+stepTime = 10;
+
+textsize = 16;
+
+black = [0 0 0]./256;
+orange = [230 159 0]./256;
+skyblue = [86 180 233]./256;
+bluishgreen = [0 158 115]./256;
+yellow = [240 228 66]./256;
+blue = [0 114 178]./256;
+vermillion = [213 94 0]./256;
+reddishpurple = [204 121 167]./256;
+
+%%
+
+f = figure(1);
+hold on
+maskOn = 2*16.7;
+maskOff = (2+12)*16.7;
+maskTime = maskOn:stepTime:maskOff;
+maskXLength = length(maskTime);
+maskColor = "#F2F2F2"; 
+shadedplot(maskTime, repmat(-90,[1,maskXLength]), ...
+repmat(90,[1,maskXLength]),...
+maskColor, maskColor);
+
+%%
+
+% first mask onset
+hold on;
+xw = xline(maskOn, '', {'Mask onset'}, 'LineWidth', 0.1,'FontName', 'Arial', 'FontSize', textsize,'FontWeight', 'normal');
+xw.LabelVerticalAlignment = 'middle';
+xw.LabelHorizontalAlignment = 'center';
+xw.Alpha = 0;
+maskOn = 36*16.7;
+maskOff = (36+12)*16.7;
+maskTime = maskOn:stepTime:maskOff;
+maskXLength = length(maskTime);
+maskColor = "#F2F2F2"; 
+shadedplot(maskTime, repmat(-90,[1,maskXLength]), ...
+repmat(90,[1,maskXLength]),...
+maskColor, maskColor);
+
+%%
+% second mask onset
+hold on;
+xp = xline(maskOn,'', {'Mask onset'}, 'LineWidth', 0.1,'FontName', 'Arial', 'FontSize', textsize,'FontWeight', 'normal');
+xp.LabelVerticalAlignment = 'middle';
+xp.LabelHorizontalAlignment = 'center';
+xp.Alpha = 0;
+xl = xline(0,'-', {'Stimulus onset'}, 'LineWidth', 1,'FontName', 'Arial', 'FontSize', textsize,'FontWeight', 'normal');
+xl.LabelVerticalAlignment = 'middle';
+xl.LabelHorizontalAlignment = 'left';
+yline(50,'-', 'LineWidth', 1);
+
+%% main curves
+
+hold on
+p1 = plot(axx, allSubjsMeanHUNN, 'Color',skyblue, 'LineWidth', 3); 
+p2 = plot(axx, allSubjsMeanHMNNBase,'Color',vermillion, 'LineWidth', 3);
+p3 = plot(axx, allSubjsMeanHMNNEpoch,'Color',yellow, 'LineWidth', 3);
+p4 = plot(axx, allSubjsMeanHMNNTime,'Color',black, 'LineWidth', 3);
+
+% p1 = stdshade(allSubjsH+50,'0.10',c1, F);
+% p2 = stdshade(allSubjsL+50,'0.10',c2, F);
+% p3 = stdshade(allSubjsM+50,'0.10',c3, F);
+
+ax = gca;
+ax.XGrid = 'on';
+% ax.XMinorGrid = 'on';
+ax.YGrid = 'off';
+ax.YMinorGrid = 'off';
+
+%% significance
+
+YMAX = 75;
+YMIN = 45;
+
+% significant time points
+line(F(significantHUNN),YMAX, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 4);
+line(F(significantHMNNBase),YMAX-0.50, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 4);
+line(F(significantHMNNEpoch),YMAX-1.0, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 4);
+line(F(significantHMNNTime),YMAX-1.50, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 4);
+% line(F(significantM),YMAX-0.8, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',c3, 'Color', c3, 'LineWidth', 4);
+
+%%
+% onset latencies
+line([hunn.ontps_cis(1), hunn.ontps_cis(end)], [YMIN+1.50 YMIN+1.50], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 1);
+line([hunn.ontps, hunn.ontps], [YMIN+1.50 YMIN+1.50], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 1);
+
+line([hmbase.ontps_cis(1), hmbase.ontps_cis(end)], [YMIN+2.10 YMIN+2.10], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 1);
+line([hmbase.ontps, hmbase.ontps], [YMIN+2.10 YMIN+2.10], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 1);
+
+line([hmepo.ontps_cis(1), hmepo.ontps_cis(end)], [YMIN+2.70 YMIN+2.70], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 1);
+line([hmepo.ontps, hmepo.ontps], [YMIN+2.70 YMIN+2.70], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 1);
+
+line([hmtp.ontps_cis(1), hmtp.ontps_cis(end)], [YMIN+3.30 YMIN+3.30], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 1);
+line([hmtp.ontps, hmtp.ontps], [YMIN+3.30 YMIN+3.30], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 1);
+
+%%
+
+% pk1st
+plot([hunn.pktps_cis(1), hunn.pktps_cis(end)], [YMIN+1.50 YMIN+1.50], '-|','Color',skyblue,'MarkerSize',6, 'LineWidth', 1); 
+line([hunn.pktps, hunn.pktps], [YMIN+1.50 YMIN+1.50], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 1);
+
+plot([hmbase.pktps_cis(1), hmbase.pktps_cis(end)], [YMIN+2.10 YMIN+2.10], '-|','Color',vermillion,'MarkerSize',6, 'LineWidth', 1);
+line([hmbase.pktps, hmbase.pktps], [YMIN+2.10 YMIN+2.10], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 1);
+
+plot([hmepo.pktps_cis(1), hmepo.pktps_cis(end)], [YMIN+2.70 YMIN+2.70], '-|','Color',yellow,'MarkerSize',6, 'LineWidth', 1);
+line([hmepo.pktps, hmepo.pktps], [YMIN+2.70 YMIN+2.70], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 1);
+
+plot([hmtp.pktps_cis(1), hmtp.pktps_cis(end)], [YMIN+3.30 YMIN+3.30], '-|','Color',black,'MarkerSize',6, 'LineWidth', 1);
+line([hmtp.pktps, hmtp.pktps], [YMIN+3.30 YMIN+3.30], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 1);
+
+%%
+
+line([hunn.offtps, hunn.offtps], [YMIN+2 YMIN+2], 'Marker','square','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 1);
+line([hmbase.offtps, hmbase.offtps], [YMIN+2.5 YMIN+2.5], 'Marker','square','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 1);
+line([hmepo.offtps, hmepo.offtps], [YMIN+3 YMIN+3], 'Marker','square','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 1);
+line([hmtp.offtps, hmtp.offtps], [YMIN+3.5 YMIN+3.5], 'Marker','square','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 1);
+
+%%
+
+xlabel('Time (ms)', 'LineWidth', 5, 'FontName', 'Arial', 'FontSize', textsize, 'FontWeight', 'bold')
+ylabel('Decoding accuracy (%)', 'LineWidth', 5, 'FontName', 'Arial', 'FontSize', textsize, 'FontWeight', 'bold')
+% legend('High Visibility', 'Low Visibility','Difference','Location', [0.78 0.85 0.15 0.08], 'FontSize', 14, 'FontWeight', 'bold')
+xlim([-100 1000])
+ylim([45 75])
+
+a = get(gca,'XTickLabel');
+set(gca,'XTickLabel',a,'FontName','Arial','FontSize',textsize);
+
+b = get(gca,'YTickLabel');
+set(gca,'YTickLabel',b,'FontName','Arial','FontSize',textsize);
+
+rectFig = get(gcf,'position');
+% width=800;
+% height=500;
+% rectFig = get(gcf,'position');
+% width=800;
+% height=500;
+% [1,1,750, 750], 'unit','pixel'
+set(gcf,'Position',[rectFig(1),rectFig(2),750, 500], 'unit','pixel', 'color', 'white', 'PaperUnits','centimeters','PaperSize',[20,20],'PaperPosition',[0,0,20,20]);% colordef white;
+set(gca,'Units','normalized')
+colordef white
+
+% pl = legend([ p1, p2, p3 ], 'High-visibility', 'Low-visibility', 'Total grand', 'Location', [0.597812500000001,0.778500000000001,0.309375,0.112]);
+pl = legend([ p1, p2, p3, p4 ], 'UNN-baseline', 'MNN-baseline','MNN-epoch','MNN-timepoint', 'Location', [0.6605,0.727,0.3094,0.147]);
+set(pl, 'FontName', 'Arial','FontWeight', 'normal');
+legend boxoff;
+
+%% exporting and ready!
+
+filename = fullfile(ResultDirectory, 'ObjectGrandTotalNoises.png');
+exportgraphics(gcf, filename, 'Resolution', 300)
+
+%% 
+
+% f = figure(2);
+% hold on
+% maskOn = 2*16.7;
+% maskOff = (2+12)*16.7;
+% maskTime = maskOn:stepTime:maskOff;
+% maskXLength = length(maskTime);
+% maskColor = "#F2F2F2"; 
+% shadedplot(maskTime, repmat(-90,[1,maskXLength]), ...
+% repmat(90,[1,maskXLength]),...
+% maskColor, maskColor);
+% 
+% %%
+% 
+% % first mask onset
+% hold on;
+% xw = xline(maskOn, '', {'Mask onset'}, 'LineWidth', 0.1,'FontName', 'Arial', 'FontSize', textsize,'FontWeight', 'normal');
+% xw.LabelVerticalAlignment = 'middle';
+% xw.LabelHorizontalAlignment = 'center';
+% xw.Alpha = 0;
+% maskOn = 36*16.7;
+% maskOff = (36+12)*16.7;
+% maskTime = maskOn:stepTime:maskOff;
+% maskXLength = length(maskTime);
+% maskColor = "#F2F2F2"; 
+% shadedplot(maskTime, repmat(-90,[1,maskXLength]), ...
+% repmat(90,[1,maskXLength]),...
+% maskColor, maskColor);
+% 
+% %%
+% % second mask onset
+% hold on;
+% xp = xline(maskOn,'', {'Mask onset'}, 'LineWidth', 0.1,'FontName', 'Arial', 'FontSize', textsize,'FontWeight', 'normal');
+% xp.LabelVerticalAlignment = 'middle';
+% xp.LabelHorizontalAlignment = 'center';
+% xp.Alpha = 0;
+% xl = xline(0,'-', {'Stimulus onset'}, 'LineWidth', 1,'FontName', 'Arial', 'FontSize', textsize,'FontWeight', 'normal');
+% xl.LabelVerticalAlignment = 'middle';
+% xl.LabelHorizontalAlignment = 'left';
+% yline(50,'-', 'LineWidth', 1);
+% 
+% %% main curves
+% 
+% hold on
+% p1 = plot(axx, allSubjsMeanLUNN+50, 'Color',skyblue, 'LineWidth', 3); 
+% p2 = plot(axx, allSubjsMeanLMNNBase+50,'Color',vermillion, 'LineWidth', 3);
+% p3 = plot(axx, allSubjsMeanLMNNEpoch+50,'Color',yellow, 'LineWidth', 3);
+% p4 = plot(axx, allSubjsMeanLMNNTime+50,'Color',black, 'LineWidth', 3);
+% 
+% % p1 = stdshade(allSubjsH+50,'0.10',c1, F);
+% % p2 = stdshade(allSubjsL+50,'0.10',c2, F);
+% % p3 = stdshade(allSubjsM+50,'0.10',c3, F);
+% 
+% ax = gca;
+% ax.XGrid = 'on';
+% % ax.XMinorGrid = 'on';
+% ax.YGrid = 'off';
+% ax.YMinorGrid = 'off';
+% 
+% %% significance
+% 
+% YMAX = 75;
+% YMIN = 45;
+% 
+% % significant time points
+% line(F(significantLUNN),YMAX, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 4);
+% line(F(significantLMNNBase),YMAX-0.50, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 4);
+% line(F(significantLMNNEpoch),YMAX-1.0, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 4);
+% line(F(significantLMNNTime),YMAX-1.50, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 4);
+% % line(F(significantM),YMAX-0.8, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',c3, 'Color', c3, 'LineWidth', 4);
+% 
+% %%
+% % onset latencies
+% line([lunn.ontps_cis(1), lunn.ontps_cis(end)], [YMIN+1.50 YMIN+1.50], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 1);
+% line([lunn.ontps, lunn.ontps], [YMIN+1.50 YMIN+1.50], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 1);
+% 
+% line([lmbase.ontps_cis(1), lmbase.ontps_cis(end)], [YMIN+2.10 YMIN+2.10], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 1);
+% line([lmbase.ontps, lmbase.ontps], [YMIN+2.10 YMIN+2.10], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 1);
+% 
+% line([lmepo.ontps_cis(1), lmepo.ontps_cis(end)], [YMIN+2.70 YMIN+2.70], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 1);
+% line([lmepo.ontps, lmepo.ontps], [YMIN+2.70 YMIN+2.70], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 1);
+% 
+% line([lmtp.ontps_cis(1), lmtp.ontps_cis(end)], [YMIN+3.30 YMIN+3.30], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 1);
+% line([lmtp.ontps, lmtp.ontps], [YMIN+3.30 YMIN+3.30], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 1);
+% 
+% %%
+% 
+% % pk1st
+% plot([lunn.pktps_cis(1), lunn.pktps_cis(end)], [YMIN+1.50 YMIN+1.50], '-|','Color',skyblue,'MarkerSize',6, 'LineWidth', 1); 
+% line([lunn.pktps,lunn.pktps], [YMIN+1.50 YMIN+1.50], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 1);
+% 
+% plot([lmbase.pktps_cis(1), lmbase.pktps_cis(end)], [YMIN+2.10 YMIN+2.10], '-|','Color',vermillion,'MarkerSize',6, 'LineWidth', 1);
+% line([lmbase.pktps,lmbase.pktps], [YMIN+2.10 YMIN+2.10], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 1);
+% 
+% plot([lmepo.pktps_cis(1), lmepo.pktps_cis(end)], [YMIN+2.70 YMIN+2.70], '-|','Color',yellow,'MarkerSize',6, 'LineWidth', 1);
+% line([lmepo.pktps,lmepo.pktps], [YMIN+2.70 YMIN+2.70], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 1);
+% 
+% plot([lmtp.pktps_cis(1), lmtp.pktps_cis(end)], [YMIN+3.30 YMIN+3.30], '-|','Color',black,'MarkerSize',6, 'LineWidth', 1);
+% line([lmtp.pktps,lmtp.pktps], [YMIN+3.30 YMIN+3.30], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 1);
+% 
+% 
+% %%
+% 
+% line([hunn.offtps, hunn.offtps], [YMIN+2 YMIN+2], 'Marker','square','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 1);
+% line([hmbase.offtps, hmbase.offtps], [YMIN+2.5 YMIN+2.5], 'Marker','square','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 1);
+% line([hmepo.offtps, hmepo.offtps], [YMIN+3 YMIN+3], 'Marker','square','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 1);
+% line([hmtp.offtps, hmtp.offtps], [YMIN+3.5 YMIN+3.5], 'Marker','square','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 1);
+% 
+% %%
+% 
+% xlabel('Time (ms)', 'LineWidth', 5, 'FontName', 'Arial', 'FontSize', textsize, 'FontWeight', 'bold')
+% % ylabel('Decoding accuracy (%)', 'LineWidth', 5, 'FontName', 'Arial', 'FontSize', textsize, 'FontWeight', 'bold')
+% % legend('High Visibility', 'Low Visibility','Difference','Location', [0.78 0.85 0.15 0.08], 'FontSize', 14, 'FontWeight', 'bold')
+% xlim([-100 1000])
+% ylim([45 75])
+% 
+% a = get(gca,'XTickLabel');
+% set(gca,'XTickLabel',a,'FontName','Arial','FontSize',textsize);
+% 
+% b = get(gca,'YTickLabel');
+% % set(gca,'YTickLabel',b,'FontName','Arial','FontSize',textsize);
+% set(gca,'YTickLabel',[]);
+% 
+% hold(gca,'off');
+% % Set the remaining axes properties
+% set(gca,'FontName','Arial','FontSize',16,'Layer','top','XGrid','on',...
+%     'XTick',[0 100 200 300 400 500 600 700 800 900 1000],'XTickLabel',...
+%     {'0','100','200','300','400','500','600','700','800','900','1000'},...
+%     'YTickLabel','','ZGrid','on');
+% 
+% rectFig = get(gcf,'position');
+% % width=800;
+% % height=500;
+% % rectFig = get(gcf,'position');
+% % width=800;
+% % height=500;
+% % [1,1,750, 750], 'unit','pixel'
+% set(gcf,'Position',[rectFig(1),rectFig(2),750, 500], 'unit','pixel', 'color', 'white', 'PaperUnits','centimeters','PaperSize',[20,20],'PaperPosition',[0,0,20,20]);% colordef white;
+% set(gca,'Units','normalized')
+% colordef white
+% 
+% % pl = legend([ p1, p2, p3 ], 'High-visibility', 'Low-visibility', 'Total grand', 'Location', [0.597812500000001,0.778500000000001,0.309375,0.112]);
+% pl = legend([ p1, p2, p3, p4 ], 'UNN-baseline', 'MNN-baseline','MNN-epoch','MNN-timepoint', 'Location', [0.6605,0.727,0.3094,0.147]);
+% set(pl, 'FontName', 'Arial','FontWeight', 'normal');
+% legend boxoff;
+% 
+% %%
+% 
+% % filename = fullfile(ResultDirectory, 'ObjectIdentityDecodingNoiseNormLowVis.png');
+% % exportgraphics(gcf, filename, 'Resolution', 300)
+% 
+% %%
+% 
+% f = figure(3);
+% hold on
+% maskOn = 2*16.7;
+% maskOff = (2+12)*16.7;
+% maskTime = maskOn:stepTime:maskOff;
+% maskXLength = length(maskTime);
+% maskColor = "#F2F2F2"; 
+% shadedplot(maskTime, repmat(-90,[1,maskXLength]), ...
+% repmat(90,[1,maskXLength]),...
+% maskColor, maskColor);
+% 
+% %%
+% 
+% % first mask onset
+% hold on;
+% xw = xline(maskOn, '', {'Mask onset'}, 'LineWidth', 0.1,'FontName', 'Arial', 'FontSize', textsize,'FontWeight', 'normal');
+% xw.LabelVerticalAlignment = 'top';
+% xw.LabelHorizontalAlignment = 'left';
+% xw.Alpha = 0;
+% maskOn = 36*16.7;
+% maskOff = (36+12)*16.7;
+% maskTime = maskOn:stepTime:maskOff;
+% maskXLength = length(maskTime);
+% maskColor = "#F2F2F2"; 
+% shadedplot(maskTime, repmat(-90,[1,maskXLength]), ...
+% repmat(90,[1,maskXLength]),...
+% maskColor, maskColor);
+% 
+% %%
+% % second mask onset
+% hold on;
+% xp = xline(maskOn,'', {'Mask onset'}, 'LineWidth', 0.1,'FontName', 'Arial', 'FontSize', textsize,'FontWeight', 'normal');
+% xp.LabelVerticalAlignment = 'bottom';
+% xp.LabelHorizontalAlignment = 'center';
+% xp.Alpha = 0;
+% xl = xline(0,'-', {'Stimulus onset'}, 'LineWidth', 1,'FontName', 'Arial', 'FontSize', textsize,'FontWeight', 'normal');
+% xl.LabelVerticalAlignment = 'bottom';
+% xl.LabelHorizontalAlignment = 'left';
+% yline(50,'-', 'LineWidth', 1);
+% 
+% %% main curves
+% 
+% hold on
+% p1 = plot(axx, allSubjsMeanDUNN, 'Color', skyblue, 'LineWidth', 3); 
+% p2 = plot(axx, allSubjsMeanDMNNBase, 'Color', vermillion, 'LineWidth', 3);
+% p3 = plot(axx, allSubjsMeanDMNNEpoch, 'Color', yellow, 'LineWidth', 3);
+% p4 = plot(axx, allSubjsMeanDMNNTime, 'Color', black, 'LineWidth', 3);
+% 
+% % p1 = stdshade(allSubjsD,'0.10',c3, F);
+% 
+% ax = gca;
+% ax.XGrid = 'on';
+% % ax.XMinorGrid = 'on';
+% ax.YGrid = 'off';
+% ax.YMinorGrid = 'off';
+% 
+% %% significance
+% 
+% YMAX = 10;
+% YMIN = -5;
+% 
+% % significant time points
+% line(F(significantDUNN),YMAX, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 4);
+% line(F(significantDMNNBase),YMAX-0.25, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 4);
+% line(F(significantDMNNEpoch),YMAX-0.50, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 4);
+% line(F(significantDMNNTime),YMAX-0.75, 'Marker','_','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 4);
+% 
+% %%
+% % onset latencies
+% line([dunn.ontps_cis(1), dunn.ontps_cis(end)], [YMIN+0.5 YMIN+0.5], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 1);
+% line([dunn.ontps, dunn.ontps], [YMIN+0.5 YMIN+0.5], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 1);
+% 
+% line([dmbase.ontps_cis(1), dmbase.ontps_cis(end)], [YMIN+0.75 YMIN+0.75], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 1);
+% line([dmbase.ontps, dmbase.ontps], [YMIN+0.75 YMIN+0.75], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 1);
+% 
+% line([dmepo.ontps_cis(1), dmepo.ontps_cis(end)], [YMIN+1.00 YMIN+1.00], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 1);
+% line([dmepo.ontps, dmepo.ontps], [YMIN+1.00 YMIN+1.00], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 1);
+% 
+% line([dmtp.ontps_cis(1), dmtp.ontps_cis(end)], [YMIN+1.25 YMIN+1.25], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 1);
+% line([dmtp.ontps, dmtp.ontps], [YMIN+1.25 YMIN+1.25], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 1);
+% 
+% 
+% % line([10, 80], [47.3 47.3], 'Marker','|','MarkerSize', 6, 'MarkerFaceColor',c3, 'Color', c3, 'LineWidth', 1);
+% % line([80, 80], [47.3 47.3], 'Marker','o','MarkerSize', 6, 'MarkerFaceColor',c3, 'Color', c3, 'LineWidth', 1);
+% 
+% %%
+% 
+% % pk1st
+% plot([dunn.pktps_cis(1), dunn.pktps_cis(end)], [YMIN+1 YMIN+1], '-|','Color',skyblue,'MarkerSize',6, 'LineWidth', 1); 
+% line([dunn.pktps, dunn.pktps], [YMIN+1 YMIN+1], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 1);
+% 
+% plot([dmbase.pktps_cis(1), dmbase.pktps_cis(end)], [YMIN+1.25 YMIN+1.25], '-|','Color',vermillion,'MarkerSize',6, 'LineWidth', 1); 
+% line([dmbase.pktps, dmbase.pktps], [YMIN+1.25 YMIN+1.25], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 1);
+% 
+% plot([dmepo.pktps_cis(1), dmepo.pktps_cis(end)], [YMIN+1.50 YMIN+1.50], '-|','Color',yellow,'MarkerSize',6, 'LineWidth', 1); 
+% line([dmepo.pktps, dmepo.pktps], [YMIN+1.50 YMIN+1.50], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 1);
+% 
+% plot([dmtp.pktps_cis(1), dmtp.pktps_cis(end)], [YMIN+1.75 YMIN+1.75], '-|','Color',black,'MarkerSize',6, 'LineWidth', 1); 
+% line([dmtp.pktps, dmtp.pktps], [YMIN+1.75 YMIN+1.75], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 1);
+% 
+% 
+% % plot([120, 200], [46.3 46.3], '-|','Color',c3,'MarkerSize',6, 'LineWidth', 1);
+% % line([120, 120], [46.3 46.3], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',c3, 'Color', c3, 'LineWidth', 1);
+% 
+% %%
+% % 
+% % % pk2nd
+% % plot([120, 200], [46.7 46.7], '-|','Color',c3,'MarkerSize',6, 'LineWidth', 1); 
+% % line([180, 180], [46.7 46.7], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',c3, 'Color', c3, 'LineWidth', 1);
+% % 
+% % 
+% % %%
+% % 
+% % % pk3rd
+% % plot([180, 280], [47.9 47.9], '-|','Color',c3,'MarkerSize',6, 'LineWidth', 1); 
+% % line([240, 240], [47.9 47.9], 'Marker','^','MarkerSize', 6, 'MarkerFaceColor',c3, 'Color', c3, 'LineWidth', 1);
+% 
+% 
+% %%
+% 
+% % offset latencies
+% 
+% line([dunn.offtps, dunn.offtps], [YMIN+0.5 YMIN+0.5], 'Marker','square','MarkerSize', 6, 'MarkerFaceColor',skyblue, 'Color', skyblue, 'LineWidth', 1);
+% 
+% line([dmbase.offtps, dmbase.offtps], [YMIN+0.75 YMIN+0.75], 'Marker','square','MarkerSize', 6, 'MarkerFaceColor',vermillion, 'Color', vermillion, 'LineWidth', 1);
+% 
+% line([dmepo.offtps, dmepo.offtps], [YMIN+1.0 YMIN+1.0], 'Marker','square','MarkerSize', 6, 'MarkerFaceColor',yellow, 'Color', yellow, 'LineWidth', 1);
+% 
+% line([dmtp.offtps, dmtp.offtps], [YMIN+1.25 YMIN+1.25], 'Marker','square','MarkerSize', 6, 'MarkerFaceColor',black, 'Color', black, 'LineWidth', 1);
+% 
+% %%
+% 
+% xlabel('Time (ms)', 'LineWidth', 5, 'FontName', 'Arial', 'FontSize', textsize, 'FontWeight', 'bold')
+% ylabel('Decoding accuracy (%)', 'LineWidth', 5, 'FontName', 'Arial', 'FontSize', textsize, 'FontWeight', 'bold')
+% % legend('High Visibility', 'Low Visibility','Difference','Location', [0.78 0.85 0.15 0.08], 'FontSize', 14, 'FontWeight', 'bold')
+% xlim([-100 1000])
+% ylim([-5 10])
+% 
+% a = get(gca,'XTickLabel');
+% set(gca,'XTickLabel',a,'FontName','Arial','FontSize',textsize);
+% 
+% b = get(gca,'YTickLabel');
+% set(gca,'YTickLabel',b,'FontName','Arial','FontSize',textsize);
+% 
+% rectFig = get(gcf,'position');
+% % width=800;
+% % height=500;
+% % rectFig = get(gcf,'position');
+% % width=800;
+% % height=500;
+% % [1,1,750, 750], 'unit','pixel'
+% set(gcf,'Position',[rectFig(1),rectFig(2),750, 500], 'unit','pixel', 'color', 'white', 'PaperUnits','centimeters','PaperSize',[20,20],'PaperPosition',[0,0,20,20]);% colordef white;
+% set(gca,'Units','normalized')
+% colordef white
+% 
+% pl = legend([ p1, p2, p3, p4 ], 'UNN-baseline', 'MNN-baseline','MNN-epoch','MNN-timepoint', 'Location', [0.6605,0.727,0.3094,0.147]);
+% % pl = legend( p1, 'Difference', 'Location', [0.6818125,0.772500000000001,0.309375,0.112]);
+% set(pl, 'FontName', 'Arial','FontWeight', 'normal');
+% legend boxoff;
+% 
+% %% adding textarrows for peaks
+% 
+% % % 1st peaks
+% % 
+% % % Create textarrow
+% % annotation(f,'textarrow',[0.450000000000001 0.398214285714286],...
+% %     [0.389944134078211 0.383240223463686],'Color',c1,'String','270 ms',...
+% %     'FontName','Arial');
+% % 
+% % % Create textarrow
+% % annotation(f,'textarrow',[0.381904761904765 0.329404761904765],...
+% %     [0.568731843575416 0.581731843575416],'Color',c2,'TextColor',c1,...
+% %     'String','160 ms',...
+% %     'FontName','Arial');
+% % 
+% % % Create textarrow
+% % annotation(f,'textarrow',[0.450000000000001 0.398214285714286],...
+% %     [0.389944134078211 0.383240223463686],'Color',c3,'String','270 ms',...
+% %     'FontName','Arial');
+% % 
+% % %%
+% % % 2nd peaks
+% % 
+% % % Create textarrow
+% % annotation(f,'textarrow',[0.381904761904765 0.329404761904765],...
+% %     [0.568731843575416 0.581731843575416],'Color',c1,'TextColor',[0 0 1],...
+% %     'String','160 ms',...
+% %     'FontName','Arial');
+% % 
+% % % Create textarrow
+% % annotation(f,'textarrow',[0.450000000000001 0.398214285714286],...
+% %     [0.389944134078211 0.383240223463686],'Color',c2,'String','270 ms',...
+% %     'FontName','Arial');
+% % 
+% % % Create textarrow
+% % annotation(f,'textarrow',[0.33 0.29375],[0.658 0.682],'Color',c3,...
+% %     'TextColor',[1 0 0],...
+% %     'String','110 ms',...
+% %     'FontName','Arial');
+% % 
+% % %%
+% % % 3rd peaks
+% % 
+% % % Create textarrow
+% % annotation(f,'textarrow',[0.24375 0.271666666666668],...
+% %     [0.758 0.708078212290498],'Color',[0 0 1],'TextColor',[0 0 1],...
+% %     'String','110 ms',...
+% %     'FontName','Arial');
+% % 
+% % % Create textarrow
+% % annotation(f,'textarrow',[0.37125 0.335],[0.536 0.560000000000001],...
+% %     'Color',[1 0 0],...
+% %     'TextColor',[1 0 0],...
+% %     'String','160 ms',...
+% %     'FontName','Arial');
+% % 
+% % % Create textarrow
+% % annotation(f,'textarrow',[0.4475 0.40375],[0.43 0.408],...
+% %     'Color',[1 0 0],...
+% %     'TextColor',[1 0 0],...
+% %     'String','270 ms',...
+% %     'FontName','Arial');
+% % 
+% % %%
+% % 
+% % % Create textarrow
+% % annotation(f,'textarrow',[0.455 0.41125],[0.754 0.764],...
+% %     'String',{'250 ms'},...
+% %     'FontName','Arial');
+% % 
+% % % Create textarrow
+% % annotation(f,'textarrow',[0.39125 0.35],[0.85 0.872000000000002],...
+% %     'String',{'180 ms'},...
+% %     'FontName','Arial');
+% % 
+% % % Create textarrow
+% % annotation(f,'textarrow',[0.26 0.28],...
+% %     [0.837000000000001 0.776000000000001],'String',{'120 ms'},...
+% %     'FontName','Arial');
+% % 
+% % 
+% %% exporting and ready!
+% % 
+% % filename = fullfile(ResultDirectory, 'ObjectIdentityDecodingNoiseNormDifference.png');
+% % exportgraphics(gcf, filename, 'Resolution', 300)
