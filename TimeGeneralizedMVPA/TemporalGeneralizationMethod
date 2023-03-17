@@ -1,0 +1,132 @@
+close all;
+clear;
+clc;
+restoredefaultpath;
+
+% Add FieldTrip path
+addpath \Users\Lenovo\Documents\FieldTrip;
+ft_defaults;
+
+% Loading the participant data
+workingDir = 'C:\Users\Lenovo\Documents\Visual_Masking_Preprocessed_Files';
+
+for subn = 32 % 1:32
+    
+    subn
+    tic;
+    %inputDir = fullfile(workingDir,'_preprocessed');
+    subjectName = sprintf('subj%02d',subn);
+    preprocessedFile = fullfile(workingDir, subjectName, strcat(subjectName,'_preprocessed.mat'));
+    load(preprocessedFile, 'data_clean');
+    load(fullfile(workingDir,'channel_labels.mat'), 'full_labels');
+    
+    % concatenate data matrix in order of trigger number (1~48)
+    conditions = unique(data_clean.trialinfo)';
+    data_C = nan(length(conditions),53,64,111);
+    
+    % pre-allocate 
+    %data_high = nan(length(subjList),53,64,110);
+    %data_low = nan(length(subjList),53,64,110);
+        
+        % get channel flag
+        flagChan = ismember(full_labels, data_clean.label);
+        
+        for ci = conditions
+            % find conditions
+            flagCond=(data_clean.trialinfo==ci);
+            % select condition from fieldtrip format data
+            cfg=[];
+            cfg.trials = flagCond;
+            data_cond = ft_selectdata(cfg, data_clean);
+            
+            
+            % change the data cell to matrix
+            data_cond_M = cat(3,data_cond.trial{:});
+            data_cond_M = permute(data_cond_M, [3 1 2]);
+            % baseline normalization
+            data_cond_M = doUNN(data_cond_M,1:10);
+            % baseline normalization
+            data_C(ci,1:size(data_cond_M, 1),flagChan,:) = data_cond_M;
+            %clear data_cond_M
+        end
+       
+    % split data for high and low visibility conditions
+    data_high = data_C(1:24,:,:,:);
+    data_low = data_C(25:48,:,:,:);
+    
+    condn = length(conditions)/2;
+    
+    % pairwise decoding
+    pairs = nan(condn*(condn-1)/2, 2);
+    pairn = 0; % initial pairn
+    for condA = 1:condn-1 % loop through condition A
+        for condB = condA+1:condn % loop through condition B
+            pairn =  pairn + 1;
+            pairs(pairn,:) = [condB,condA];
+        end
+    end
+    
+    %tpn = size(data_C,4);
+	tpn = 111;
+    chann = size(data_C,3);
+    
+    % preallocate decodingAcc matrix
+    permn = 100; % times for repetition
+    %DA_high = nan(permn,pairn,tpn,tpn); % decoding accuracy
+    %DA_low = nan(permn,pairn,tpn,tpn); 
+
+% for low vis
+    for iperm = 1:permn % loop through permutations
+        % create pseudo-trials
+        bins = 4;
+        pseudoData = nan(condn,bins,sum(flagChan),tpn);
+        for icond = 1:condn
+            condData = squeeze(data_low(icond,:,flagChan,:));
+            pseudoCondData = averageTrials(condData(:,:,1:tpn), bins);
+            pseudoData(icond,:,:,:) = pseudoCondData;
+            clear pseudoCondData;
+        end
+        
+    %pseudoData = doCVMVNN(pseudoData, 1:91);
+    
+    for ipair = 1:pairn % loop through condition pairs
+            
+        for itp1 = 1:tpn % loop through all time points    
+                % define training set
+                training_set = [squeeze(pseudoData(pairs(ipair,1),1:bins-1,:,itp1)); ...
+                squeeze(pseudoData(pairs(ipair,2),1:bins-1,:,itp1))];
+        
+                training_labels = [ones(3,1);ones(3,1)*2];
+				model = svmtrain(training_labels, training_set, '-s 0 -t 0 -q');
+                
+                for itp2 = 1:tpn
+                    testing_set = [squeeze(pseudoData(pairs(ipair,1), bins,:,itp2))'; ...
+                    squeeze(pseudoData(pairs(ipair,2), bins,:,itp2))'];
+                    testing_labels = [1;2];
+                    [~, accuracy, ~] = svmpredict(testing_labels, testing_set, model, '-q');
+                    acc = accuracy(1);
+                    % train and test SVM
+                    DA_low(iperm,ipair,itp1,itp2) = acc;
+                end
+        end
+    end
+    toc;
+    end
+end
+
+    % average everything except time points
+    mean_DA = squeeze(nanmean(DA_low,1));
+    timeCourseL = squeeze(nanmean(nanmean(DA_low,1),2));
+
+figure(2);
+imagesc(-100:10:1000, -100:10:1000, timeCourseL);
+axis xy; axis equal; axis tight;
+xlabel('Time (ms)'); ylabel('Time (ms)');
+CH = colorbar('southoutside');
+CH.Label.String = 'Decoding accuracy (%)';
+title('Time-Time Matrix of Low Visibility Condition');
+% Adjust the position and size of figure
+rectFig = get(gcf,'position');
+width=600;
+height=300;
+set(gcf,'position',[rectFig(1),rectFig(2),width,height], 'color', 'white');
