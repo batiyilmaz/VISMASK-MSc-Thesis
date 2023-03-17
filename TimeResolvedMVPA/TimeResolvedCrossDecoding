@@ -58,7 +58,7 @@ for subn = 1:32
     
     condn = length(conditions)/2;
     
-    % pairwise decoding
+    % pairwise classification
     pairs = nan(condn*(condn-1)/2, 2);
     pairn = 0; % initial pairn
     for condA = 1:condn-1 % loop through condition A
@@ -71,8 +71,8 @@ for subn = 1:32
     tpn = size(data_C,4);
     chann = size(data_C,3);
     
-    % preallocate decodingAcc matrix
-    permn = 100; % times for repetetion
+    % preallocate decoding accuracy matrix
+    permn = 100; % times for repetition
     
     % for high vis
     for iperm = 1:permn % loop through permutations
