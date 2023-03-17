@@ -1,0 +1,92 @@
+%% Time Time Stats %%
+
+clc;
+clear;
+close all;
+
+% ResultDirectory = '/Volumes/Extreme SSD/MScThesisResultsforGitHub/Code/ObjectIdentityDecoding/TemporalGeneralization';
+
+load('allSubjsL.mat')
+load('allSubjsH.mat')
+
+allSubjsD = allSubjsH - allSubjsL;
+
+figure(1);
+timepoints=-100:10:1000;
+resH=allSubjsH;
+reSH = resH-50;
+meanresmatH=squeeze(mean(resH(:,1:111,1:111),1));
+stat=doStats_2D(reSH(:,1:111,1:111),0.05);
+statmat=stat.sigttest;
+cb.pos ='EastOutside';
+cb.showstr = true;
+cb.str = "Decoding accuracy (%)"; 
+% 
+burdami(meanresmatH,timepoints,0,statmat,0,0,cb);
+xlabel('Generalization Time (ms)','FontSize', 12, 'FontName', 'Arial','FontWeight','bold');
+ylabel('Time (ms)','FontSize', 12, 'FontName', 'Arial', 'FontWeight','bold');
+set(gca,'FontSize',12);
+line([0,1000], [0,1000],'color',[0.5,0.5,0.5], 'linewidth', 1, 'linestyle', 'none');
+set(gcf,'position',[100 100 300 250], 'color', 'white');
+title('High-visibility');
+rectFig = get(gcf,'position');
+set(gcf,'Position',[rectFig(1),rectFig(2),600, 300], 'unit','pixel', 'color', 'white', 'PaperUnits','centimeters','PaperSize',[20,20],'PaperPosition',[0,0,20,20]);% colordef white;
+set(gca,'Units','normalized')
+colordef white
+
+% filename = fullfile(ResultDirectory, 'Highvis.png');
+% exportgraphics(gcf, filename, 'Resolution', 300)
+
+
+figure(2);
+timepoints=-100:10:1000;
+resL=allSubjsL;
+reSL = resL-50;
+meanresmatL=squeeze(mean(resL(:,1:111,1:111),1));
+stat=doStats_2D(reSL(:,1:111,1:111),0.05);
+statmat=stat.sigttest;
+cb.pos ='EastOutside';
+cb.showstr = true;
+cb.str = "Decoding accuracy (%)"; 
+% 
+burdami(meanresmatL,timepoints,0,statmat,0,0,cb);
+xlabel('Generalization Time (ms)','FontSize', 12, 'FontName', 'Arial','FontWeight','bold');
+ylabel('Time (ms)','FontSize', 12, 'FontName', 'Arial', 'FontWeight','bold');
+set(gca,'FontSize',12);
+line([0,1000], [0,1000],'color',[0.5,0.5,0.5], 'linewidth', 1, 'linestyle', 'none');
+set(gcf,'position',[100 100 300 250], 'color', 'white');
+title('Low-visibility');
+rectFig = get(gcf,'position');
+set(gcf,'Position',[rectFig(1),rectFig(2),600, 300], 'unit','pixel', 'color', 'white', 'PaperUnits','centimeters','PaperSize',[20,20],'PaperPosition',[0,0,20,20]);% colordef white;
+set(gca,'Units','normalized')
+colordef white
+
+% filename = fullfile(ResultDirectory, 'Lowvis.png');
+% exportgraphics(gcf, filename, 'Resolution', 300)
+
+
+figure(3);
+timepoints=-100:10:1000;
+resD=allSubjsD;
+reSD = resD;
+meanresmatD=squeeze(mean(resD(:,1:111,1:111),1));
+stat=doStats_2D(reSD(:,1:111,1:111),0.05);
+statmat=stat.sigttest;
+cb.pos ='EastOutside';
+cb.showstr = true;
+cb.str = "Decoding accuracy (%)"; 
+% 
+burdami(meanresmatD,timepoints,0,statmat,0,0,cb);
+xlabel('Generalization Time (ms)','FontSize', 12, 'FontName', 'Arial','FontWeight','bold');
+ylabel('Time (ms)','FontSize', 12, 'FontName', 'Arial', 'FontWeight','bold');
+set(gca,'FontSize',12);
+line([0,1000], [0,1000],'color',[0.5,0.5,0.5], 'linewidth', 1, 'linestyle', 'none');
+set(gcf,'position',[100 100 300 250], 'color', 'white');
+title('Difference');
+rectFig = get(gcf,'position');
+set(gcf,'Position',[rectFig(1),rectFig(2),600, 300], 'unit','pixel', 'color', 'white', 'PaperUnits','centimeters','PaperSize',[20,20],'PaperPosition',[0,0,20,20]);% colordef white;
+set(gca,'Units','normalized')
+colordef white
+
+% filename = fullfile(ResultDirectory, 'Diff.png');
+% exportgraphics(gcf, filename, 'Resolution', 300)
