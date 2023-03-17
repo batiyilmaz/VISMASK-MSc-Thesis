@@ -1,0 +1,186 @@
+% two more things to add/ revise: 1. please plot the time points relating to the stimulus onset also on the figure 
+% I can't read when the effects show now on your plot
+% 2. please add the stats on the plot, noting down the significant time points and if possible, 
+% the errors on the curve (either standard error of the mean or its 95% confidence interval)
+
+close all;
+clear;
+clc;
+restoredefaultpath;
+
+% Add FieldTrip path
+addpath /Users/batiyilmaz/Documents/FieldTrip;
+ft_defaults;
+
+addpath(genpath('/Users/batiyilmaz/Desktop/othersothers/libsvm-3.25'));
+
+% Loading the participant data
+workingDir = '/Volumes/BATIDISK/VisualMasking/EEGBehav';
+EEGDir = '/Volumes/KINGSTON/Visual_Masking_Preprocessed_Files';
+
+T = readtable('subject_trial_removal_upt.csv');
+A = table2array(T(:,2:end));
+
+for subn = 2
+
+    subn
+    tic;
+    %inputDir = fullfile(workingDir,'_preprocessed');
+    subjectName = sprintf('subj%02d',subn);
+    preprocessedFile = fullfile(EEGDir, subjectName, strcat(subjectName,'_preprocessed.mat'));
+    load(preprocessedFile, 'data_clean');
+    load(fullfile(EEGDir,'channel_labels.mat'), 'full_labels');
+
+    % Define data path
+    mat_folder = '/Volumes/BATIDISK/VisualMasking/EEGBehav';
+    mat_file = dir(fullfile(mat_folder, subjectName, 'BehavRes*.mat'));
+    
+    X = permute(data_clean.trial, [1, 3, 2]);
+    X = cell2mat(X);
+    X = permute(X, [3, 1, 2]);
+
+    % Define data file
+    datastr = fullfile(mat_file.folder,mat_file.name);
+
+    conct_condNum = [];
+    conct_maskNum = [];
+
+    for i = 1 : length(mat_file)
+    subjID = mat_file(i).name;
+    behavFile = fullfile(workingDir, subjectName, subjID);
+    allData = load(behavFile);
+    condNum = vertcat(allData.Data.ConditionNum);
+    maskNum = vertcat(allData.Data.MaskNum);
+    conct_condNum = cat(1, conct_condNum, condNum);
+    conct_maskNum = cat(1, conct_maskNum, maskNum);
+
+    % omitting NaNs in the concetanated variables
+    conct_condNum(isnan(conct_maskNum)) = [];
+    conct_maskNum(isnan(conct_maskNum)) = [];
+    
+    end
+
+    new_trial = A(subn,:);
+    
+    
+    for i = 1:length(new_trial)
+    if isnan(new_trial(i)) == false
+    conct_maskNum(new_trial(i)) = [];
+
+    else 
+        continue 
+    end
+    end
+    
+
+    if subn == 3
+    lastn = 780;
+    conct_maskNum = conct_maskNum(1:end-lastn,:);
+    
+    end
+    
+
+    % for processing subject 3
+    %if structure subject number 3 or not
+    %lastn = 781; 624 2543
+    %new_conct_maskNum = conct_maskNum(1:end-lastn,:);
+
+    %end
+
+    conditions = unique(conct_maskNum)';
+    data_C = nan(length(conditions),106,64,111);
+
+    
+    % get channel flag
+        flagChan = ismember(full_labels, data_clean.label);
+        
+        for ci = (1: length(conditions))
+            % find conditions
+            %ci
+            flagCond=(conct_maskNum==conditions(ci));
+            % select condition from fieldtrip format data
+            cfg=[];
+            cfg.trials = flagCond;
+            data_cond = ft_selectdata(cfg, data_clean);
+            
+            
+            % change the data cell to matrix
+            data_cond_M = cat(3,data_cond.trial{:});
+            data_cond_M = permute(data_cond_M, [3 1 2]);
+            % baseline normalization
+            data_cond_M = doUNN(data_cond_M,1:10);
+            % baseline normalization
+            data_C(ci,1:size(data_cond_M, 1),flagChan,:) = data_cond_M;
+        end
+       
+    condn = length(conditions);
+    
+    % pairwise decoding
+    pairs = nan(condn*(condn-1)/2, 2);
+    pairn = 0; % initial pairn
+    for condA = 1:condn-1 % loop through condition A
+        for condB = condA+1:condn % loop through condition B
+            pairn =  pairn + 1;
+            pairs(pairn,:) = [condB,condA];
+        end
+    end
+    
+    tpn = size(data_C,4);
+    chann = size(data_C,3);
+    
+    % preallocate decodingAcc matrix
+    permn = 100; % times for repetetion
+    
+    % for high vis
+    for iperm = 1:permn % loop through permutations
+        % create pseudo-trials
+        bins = 4;
+        pseudoData = nan(condn,bins,sum(flagChan),tpn);
+        for icond = 1:condn
+            condData = squeeze(data_C(icond,:,flagChan,:));
+            pseudoCondData = averageTrials(condData, bins);
+            pseudoData(icond,:,:,:) = pseudoCondData;
+            clear pseudoCondData;
+        end
+        
+        for ipair = 1:pairn % loop through condition pairs
+            
+            for itp = 1:tpn % loop through alll time points    
+                % define training set
+                training_set = [squeeze(pseudoData(pairs(ipair,1),1:bins-1,:,itp)); ...
+                    squeeze(pseudoData(pairs(ipair,2),1:bins-1,:,itp))];
+                
+                training_labels = [ones(3,1);ones(3,1)*2];
+                
+                % define testing set
+                testing_set = [squeeze(pseudoData(pairs(ipair,1), bins,:,itp))'; ...
+                    squeeze(pseudoData(pairs(ipair,2), bins,:,itp))'];
+                testing_labels = [1;2];
+                
+                % train and test SVM
+                [DA(subn,iperm,ipair,itp), model] = ...
+                    train_test_SVM_v325(training_set, testing_set, ...
+                    training_labels, testing_labels);
+            end
+        end
+    end
+    toc;
+end
+    
+% average everything except time points
+    meanDA = squeeze(nanmean(DA,2));
+    mean2DA= squeeze(nanmean(nanmean(DA,2),3));
+
+figure
+hold on
+title('Object Identity Time Course Decoding for High and Low Visibility Conditions (N=32)')
+xlabel('Time [ms]')
+ylabel('Decoding Accuracy (%)')
+plot(-100:10:1000,mean2DA, 'LineWidth', 2);
+%plot(-100:10:1000,mean2DA_low, 'LineWidth', 2);
+xline(0,'--', 'linewidth', 1);
+yline(50,'--', 'linewidth', 1);
+plot([50 50], 'k-');
+%legend('High Visibility','Low Visibility')
+xlim([-100 1000])
+ylim([40 80])
