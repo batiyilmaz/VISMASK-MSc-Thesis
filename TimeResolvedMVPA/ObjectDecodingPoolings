@@ -1,0 +1,192 @@
+% Object Identity Decoding with Various Pooling Settings
+
+close all;
+clear;
+clc;
+restoredefaultpath;
+
+% Add FieldTrip path
+addpath /Users/batiyilmaz/Documents/FieldTrip;
+ft_defaults;
+
+addpath(genpath('/Users/batiyilmaz/Desktop/othersothers/libsvm-3.25'));
+
+% Loading the participant data
+workingDir = '/Volumes/KINGSTON/Visual_Masking_Preprocessed_Files';
+for subn = 1:32
+
+    subn
+    tic;
+    %inputDir = fullfile(workingDir,'_preprocessed');
+    subjectName = sprintf('subj%02d',subn);
+    preprocessedFile = fullfile(workingDir, subjectName, strcat(subjectName,'_preprocessed.mat'));
+    load(preprocessedFile, 'data_clean');
+    load(fullfile(workingDir,'channel_labels.mat'), 'full_labels');
+    
+    % concatenate data matrix in order of trigger number (1~48)
+    conditions = unique(data_clean.trialinfo)';
+    data_C = nan(length(conditions),53,64,111);
+    
+    % pre-allocate 
+    %data_high = nan(length(subjList),53,64,110);
+    %data_low = nan(length(subjList),53,64,110);
+        
+        % get channel flag
+        flagChan = ismember(full_labels, data_clean.label);
+        
+        for ci = conditions
+            % find conditions
+            flagCond=(data_clean.trialinfo==ci);
+            % select condition from fieldtrip format data
+            cfg=[];
+            cfg.trials = flagCond;
+            data_cond = ft_selectdata(cfg, data_clean);
+            
+            
+            % change the data cell to matrix
+            data_cond_M = cat(3,data_cond.trial{:});
+            data_cond_M = permute(data_cond_M, [3 1 2]);
+            % baseline normalization
+            data_cond_M = doUNN(data_cond_M,1:10);
+            % baseline normalization
+            data_C(ci,1:size(data_cond_M, 1),flagChan,:) = data_cond_M;
+        end
+       
+    % split data for high and low visibility conditions
+    % data_high(i,:,:,:) = data_C(1:24,:,:,:),1));
+    % data_low(i,:,:,:) = data_C(25:48,:,:,:),1));
+    data_high = data_C(1:24,:,:,:);
+    data_low = data_C(25:48,:,:,:);
+
+    LIA_1 = ismember(full_labels,{'Pz','Oz','POz'});
+    LIA_2 = ismember(full_labels,{'P5','P7', 'PO7', 'P6', 'P8', 'PO8'});
+%     LIA_3 = ismember(full_labels,{'Fp1','Fp2'});
+    LIA_3 = ismember(full_labels,{'Pz','Oz','POz','P5','P7','PO7','P6','P8','PO8'});
+    LIA_4 = ismember(full_labels,{'O1','PO7','PO3','Oz','O2', 'PO4', 'PO8'}); % perioccipital
+    LIA_5 = ismember(full_labels,{'O1','P5','P7','PO7','PO3', 'O2', 'P6', 'P8','PO4','PO8'}); % occ-temp-parietal
+    LIA_6 = ismember(full_labels,{'P1','P2','Pz','CPz'}); % central
+    LIA_7 = ismember(full_labels,{'F7','F3','AF3','AF4', 'F4','F8'}); % frontal
+
+
+    dataHocc = data_high(:,:,LIA_1,:);
+    dataLocc = data_low(:,:,LIA_1,:);
+
+    dataHtem = data_high(:,:,LIA_2,:);
+    dataLtem = data_low(:,:,LIA_2,:);
+
+    dataHult = data_high(:,:,LIA_3,:);
+    dataLult = data_low(:,:,LIA_3,:);
+
+    dataHperi = data_high(:,:,LIA_4,:);
+    dataLperi = data_low(:,:,LIA_4,:);
+
+    dataHparial = data_high(:,:,LIA_5,:);
+    dataLparial = data_low(:,:,LIA_5,:);
+
+    dataHcentr = data_high(:,:,LIA_6,:);
+    dataLcentr = data_low(:,:,LIA_6,:);
+
+    dataHfront = data_high(:,:,LIA_7,:);
+    dataLfront = data_low(:,:,LIA_7,:);
+    
+    condn = length(conditions)/2;
+    
+    % pairwise decoding
+    pairs = nan(condn*(condn-1)/2, 2);
+    pairn = 0; % initial pairn
+    for condA = 1:condn-1 % loop through condition A
+        for condB = condA+1:condn % loop through condition B
+            pairn =  pairn + 1;
+            pairs(pairn,:) = [condB,condA];
+        end
+    end
+    
+    tpn = size(data_C,4);
+    chann = size(dataHfront,3);
+    
+    % preallocate decodingAcc matrix
+    permn = 100; % times for repetetion
+
+    % for high vis
+    for iperm = 1:permn % loop through permutations
+        % create pseudo-trials
+        bins = 4;
+        pseudoData = nan(condn,bins,chann,tpn);
+        for icond = 1:condn
+            condData = squeeze(dataHfront(icond,:,:,:));
+            pseudoCondData = averageTrials(condData, bins);
+            pseudoData(icond,:,:,:) = pseudoCondData;
+            clear pseudoCondData;
+        end
+        
+        for ipair = 1:pairn % loop through condition pairs
+            
+            for itp = 1:tpn % loop through alll time points    
+                % define training set
+                training_set = [squeeze(pseudoData(pairs(ipair,1),1:bins-1,:,itp)); ...
+                    squeeze(pseudoData(pairs(ipair,2),1:bins-1,:,itp))];
+                
+                training_labels = [ones(3,1);ones(3,1)*2];
+                
+                % define testing set
+                testing_set = [squeeze(pseudoData(pairs(ipair,1), bins,:,itp))'; ...
+                    squeeze(pseudoData(pairs(ipair,2), bins,:,itp))'];
+                testing_labels = [1;2];
+                
+                % train and test SVM
+                [DA_high(subn,iperm,ipair,itp), model] = ...
+                    train_test_SVM_v325(training_set, testing_set, ...
+                    training_labels, testing_labels);
+            end
+        end
+    end
+
+    % for low vis
+    for iperm = 1:permn % loop through permutations
+        % create pseudo-trials
+        bins = 4;
+        pseudoData = nan(condn,bins,chann,tpn);
+        for icond = 1:condn
+            condData = squeeze(dataLfront(icond,:,:,:));
+            pseudoCondData = averageTrials(condData, bins);
+            pseudoData(icond,:,:,:) = pseudoCondData;
+            clear pseudoCondData;
+        end
+    
+        for ipair = 1:pairn % loop through condition pairs
+            
+            for itp = 1:tpn % loop through alll time points    
+                % define training set
+                training_set = [squeeze(pseudoData(pairs(ipair,1),1:bins-1,:,itp)); ...
+                    squeeze(pseudoData(pairs(ipair,2),1:bins-1,:,itp))];
+                
+                training_labels = [ones(3,1);ones(3,1)*2];
+                
+                % define testing set
+                testing_set = [squeeze(pseudoData(pairs(ipair,1), bins,:,itp))'; ...
+                    squeeze(pseudoData(pairs(ipair,2), bins,:,itp))'];
+                testing_labels = [1;2];
+                
+                % train and test SVM
+                DA_low(subn,iperm,ipair,itp) = ...
+                    train_test_SVM_v325(training_set, testing_set, ...
+                    training_labels, testing_labels);
+            end
+        end
+    end
+end
+
+    meanDA_high = squeeze(nanmean(DA_high,2));
+    mean2DA_high = squeeze(nanmean(nanmean(DA_high,2),3));
+    mean3DA_high = squeeze(nanmean(mean2DA_high,1));
+
+    meanDA_low = squeeze(nanmean(DA_low,2));
+    mean2DA_low = squeeze(nanmean(nanmean(DA_low,2),3));
+    mean3DA_low = squeeze(nanmean(mean2DA_low,1));
+    
+    figure(1)
+    hold on
+    plot(-100:10:1000, mean3DA_high, 'b');
+    plot(-100:10:1000, mean3DA_low, 'r');
+    xlim([-100 1000]);
+    
