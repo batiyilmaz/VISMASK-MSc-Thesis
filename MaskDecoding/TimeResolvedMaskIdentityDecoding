@@ -115,7 +115,7 @@ for subn = 2
        
     condn = length(conditions);
     
-    % pairwise decoding
+    % pairwise decoding setting
     pairs = nan(condn*(condn-1)/2, 2);
     pairn = 0; % initial pairn
     for condA = 1:condn-1 % loop through condition A
@@ -128,14 +128,14 @@ for subn = 2
     tpn = size(data_C,4);
     chann = size(data_C,3);
     
-    % preallocate decodingAcc matrix
-    permn = 100; % times for repetetion
+    % preallocating the matrix
+    permn = 100; % repetition
     
     % for high vis
     for iperm = 1:permn % loop through permutations
         % create pseudo-trials
         bins = 4;
-        pseudoData = nan(condn,bins,sum(flagChan),tpn);
+        pseudoData = nan(condn,bins,sum(flagChan),tpn); % add flagchan
         for icond = 1:condn
             condData = squeeze(data_C(icond,:,flagChan,:));
             pseudoCondData = averageTrials(condData, bins);
@@ -167,7 +167,7 @@ for subn = 2
     toc;
 end
     
-% average everything except time points
+% average everything 
     meanDA = squeeze(nanmean(DA,2));
     mean2DA= squeeze(nanmean(nanmean(DA,2),3));
 
