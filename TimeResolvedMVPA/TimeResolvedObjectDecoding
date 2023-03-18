@@ -58,7 +58,7 @@ for subn = 1:32
     
     condn = length(conditions)/2;
     
-    % pairwise decoding
+    % pairwise decoding settings
     pairs = nan(condn*(condn-1)/2, 2);
     pairn = 0; % initial pairn
     for condA = 1:condn-1 % loop through condition A
@@ -88,7 +88,7 @@ for subn = 1:32
         
         for ipair = 1:pairn % loop through condition pairs
             
-            for itp = 1:tpn % loop through alll time points    
+            for itp = 1:tpn % loop through time points    
                 % define training set
                 training_set = [squeeze(pseudoData(pairs(ipair,1),1:bins-1,:,itp)); ...
                     squeeze(pseudoData(pairs(ipair,2),1:bins-1,:,itp))];
