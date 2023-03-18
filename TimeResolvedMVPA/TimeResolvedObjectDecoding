@@ -75,7 +75,7 @@ for subn = 1:32
     chann = size(data_C,3);
     
     % preallocate decodingAcc matrix
-    permn = 100; % times for repetetion
+    permn = 100; % repetition amount
     
     % for high vis
     for iperm = 1:permn % loop through permutations
