@@ -1,3 +1,6 @@
+Adapted and modified from the tutorials by Siying Xie and Prof. Radek Cichy
+Author: Bati Yilmaz
+
 close all;
 clear;
 clc;
