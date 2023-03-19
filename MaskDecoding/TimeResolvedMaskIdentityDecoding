@@ -1,11 +1,6 @@
 Adapted and modified from the tutorials and supervisions by Siying Xie and Prof. Radek Cichy.
 Author: Bati Yilmaz
 
-% two more things to add/ revise: 1. please plot the time points relating to the stimulus onset also on the figure 
-% I can't read when the effects show now on your plot
-% 2. please add the stats on the plot, noting down the significant time points and if possible, 
-% the errors on the curve (either standard error of the mean or its 95% confidence interval)
-
 close all;
 clear;
 clc;
